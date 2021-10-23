@@ -43,7 +43,7 @@ class SignUpMerchant{
         // }
     }
 
-    function Card_validation(&$Card_number,&$Credit,&$Cvc_number,&$Valid_from,&$Valid_till){
+    function Card_validation(&$Card_number,&$Cvc_number,&$Valid_from,&$Valid_till){
         //$validate = new Validate();
         $data = json_decode(file_get_contents("php://input"),true);
         $Card_number = $data['Card_number'];
@@ -60,30 +60,32 @@ class SignUpMerchant{
         return json_encode($Object);
     }
 
-
-    function Card_Api($tableName,$Card_number,$Credit,$Cvc_number,$Valid_from,$Valid_till){
-        $Credit = "50.0000";
-        self::headers_function();
-        self::Card_validation($Card_number,$Credit,$Cvc_number,$Valid_from,$Valid_till);
+    function Reference_key($value){
         $db = new Database();
-        $pera = array($Card_number,$Credit,$Cvc_number,$Valid_from,$Valid_till);
+        return $db->get_id("card","Card_number","'$value'");
+    }
+    function Card_Api($tableName,$Card_number,$Cvc_number,$Valid_from,$Valid_till){
+        self::headers_function();
+        self::Card_validation($Card_number,$Cvc_number,$Valid_from,$Valid_till);
+        $db = new Database();
+        $pera = array($Card_number,$Cvc_number,$Valid_from,$Valid_till);
         $db->insert($tableName,$pera);
-        $this->card_id = $db->card_reference_key;
+        $this->Card_id = self::Reference_key($Card_number);
     }
 
-
-    function Merchant_Api($tableName,$Name,$Email,$Merchant_password,$Status = true,$Image = "Image.jpeg",$Create_at = "10:12:13",$Current_at = "11:12:13",$Token = "0123734568456"){
+ 
+    function Merchant_Api($tableName,$Name,$Email,$Merchant_password,$Image = "Image.jpeg",$Create_at = "10:12:13",$Current_at = "11:12:13"){
         self::headers_function();
         self::Merchant_validation($Name,$Email,$Merchant_password);
-        $Card_id = $this->card_id;
+        $Card_id = $this->Card_id;
         $db = new Database();
-        $pera = array($Name,$Email,$Merchant_password,$Status,$Image,$Create_at,$Current_at,$Token,$Card_id);
+        $pera = array($Name,$Email,$Merchant_password,$Image,$Create_at,$Current_at,$Card_id);
         $db->insert($tableName,$pera);
 
     }
     // This fucntion will take table Name , Name, CNIC and fetch data and print in json format
-    function Sign_Api($Name,$Email,$Merchant_password,$Card_number,$Credit,$Cvc_number,$Valid_from,$Valid_till){
-        self::Card_Api("card",$Card_number,$Credit,$Cvc_number,$Valid_from,$Valid_till);
+    function Sign_Api($Name,$Email,$Merchant_password,$Card_number,$Cvc_number,$Valid_from,$Valid_till){
+        self::Card_Api("card",$Card_number,$Cvc_number,$Valid_from,$Valid_till);
         self::Merchant_Api("merchant",$Name,$Email,$Merchant_password);
     }
 }
@@ -96,6 +98,6 @@ class SignUpMerchant{
     $Valid_till = null;
     $Credit = null;
     $Api = new SignUpMerchant();
-    $Api->Sign_Api($Name,$Email,$Merchant_password,$Card_number,$Credit,$Cvc_number,$Valid_from,$Valid_till);
+    $Api->Sign_Api($Name,$Email,$Merchant_password,$Card_number,$Cvc_number,$Valid_from,$Valid_till);
 
 ?>

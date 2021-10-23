@@ -8,7 +8,7 @@ class Database{
     public $card_reference_key;
 
     private function build_connection(){     //build sql database connection 
-        $conn = new mysqli("localhost","root","","mail_send_service");
+        $conn = new mysqli("localhost","root","","mail_sending_service");
         if ($conn->connect_error){
             echo "Database Connection Error";
         }
@@ -26,24 +26,44 @@ class Database{
      * Function to insert user or Employee in database.
      * 
      */
-    function insert($tableName,$perameter){
-        $conn = self::build_connection();
-        $q = "select count(*) as count from $tableName";
-        $id = $conn->query($q);
 
+
+    function insert($tableName,$perameter){
+        $col_name = null;
+        if ($tableName == "card"){
+            $col_name = "Card_number,Cvc_number,Valid_from,Valid_till"; 
+        }elseif($tableName == "merchant"){
+            $col_name = "Name,Email,Merchant_Password,Image,Create_at,Current_at,Card_id";
+        }elseif($tableName == "secondary_user"){
+            $col_name = "Name,Email,User_password,Email_permission,List_view_permission,Payment_permission,Forget_password_permission,Login_permission,Token,Merchant_id";
+        }elseif($tableName == "request"){
+            $col_name = "Mail_from,Mail_to,Mail_cc,Mail_bcc,Subject,Body,Merchant_id,Response_id";
+        }elseif($tableName == "response"){
+            $col_name = "Status,error,Description";
+        }
 
         $S = implode("','",$perameter);
         $S2 = "'".$S."'";
-        $row = $id->fetch_assoc();
-        $I = $row['count']+1;
-        $S3 = "$I,";
-        $perameters = $S3.$S2;
-        $this->card_reference_key = $I;
+        $conn = self::build_connection();
+        
 
-        $q2 = "insert into $tableName values($perameters)";
+        $q2 = "insert into $tableName($col_name) values($S2)";
         $conn->query($q2);
         echo "Data successfully insert!";
         self::close_connection($conn);
+    }
+
+
+
+
+    function get_id($tableName,$col_name,$value){
+        $conn = self::build_connection();
+        $q = "select Id from $tableName where $col_name = $value";
+        $result = $conn->query($q);
+        $row = $result->fetch_assoc();
+        $ret = $row['Id'];
+        self::close_connection($conn);
+        return $ret;
     }
 
     /**
@@ -62,22 +82,22 @@ class Database{
     /**
      * This function is used to select user from table with the specific cnic.
      */
-    function search()        // searching employee by cnic
-    {
-        $conn = self::build_connection();
-        //$q = "select * from ".$tableName ." WHERE cnic='{$cnic}'";
-        $q = "select count(*) as count from card";
-        $result = $conn->query($q);
-        $row = $result->fetch_assoc();
-        echo $row['count']+1;
-        self::close_connection($conn);
-        // if($result->num_rows > 0){
-        //     return true;
-        // }
-        // else{
-        //     return false;
-        // }
-    }
+    // function search()        // searching employee by cnic
+    // {
+    //     $conn = self::build_connection();
+    //     //$q = "select * from ".$tableName ." WHERE cnic='{$cnic}'";
+    //     $q = "select count(*) as count from card";
+    //     $result = $conn->query($q);
+    //     $row = $result->fetch_assoc();
+    //     echo $row['count']+1;
+    //     self::close_connection($conn);
+    //     // if($result->num_rows > 0){
+    //     //     return true;
+    //     // }
+    //     // else{
+    //     //     return false;
+    //     // }
+    // }
 
     /**
      * This functioon is used to search employee with specific CNIC and name.
