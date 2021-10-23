@@ -55,7 +55,7 @@ class Database{
 
 
 
-
+    // this function take tableName , Col_name, its col value and return id on that value.
     function get_id($tableName,$col_name,$value){
         $conn = self::build_connection();
         $q = "select Id from $tableName where $col_name = $value";
@@ -65,6 +65,51 @@ class Database{
         self::close_connection($conn);
         return $ret;
     }
+    // this function take tableName , Email, Password and return true if entries exist and false if not.
+    function Search_login($tableName,$Email,$Password){
+        $conn = self::build_connection();
+        $E = "'$Email'";
+        $P = "'$Password'";
+        $q = "select * from $tableName where Email = $E and Merchant_password = $P";
+        $result = $conn->query($q);
+        if ($result->num_rows > 0){
+            return true;
+        }else{
+            return false;
+        }
+        self::close_connection($conn);
+    }
+    // this function take Token and Email, update token and status for login merchants
+    function Update_token($Token,$Email){
+        $conn = self::build_connection();
+        $T = "'$Token'";
+        $E = "'$Email'";
+        $q = "UPDATE merchant SET Token = $T, Status = 1 where Email = $E";
+        $result = $conn->query($q);
+        self::close_connection($conn);
+    }
+    // this function take Email, update Create_at and current_at time for login merchants
+    function Set_login_time($Email){
+        $conn = self::build_connection();
+        $t = time();
+        $Time = date("H:i:s",$t);
+        $T = "'$Time'";
+        $E = "'$Email'";
+        $q = "UPDATE merchant SET Create_at = $T, Current_at = $T where Email = $E";
+        $result = $conn->query($q);
+        self::close_connection($conn);
+    }
+
+    // this function will remove token and change status for logout merchant
+    function Logout_merchant($Email){
+        $conn = self::build_connection();
+        $E = "'$Email'";
+        $q = "UPDATE merchant SET Token = null, Status = 0 where Email = $E";
+        $result = $conn->query($q);
+        self::close_connection($conn);
+    }
+
+
 
     /**
      * This function is used to fetch users from table.
