@@ -13,44 +13,54 @@ class SignUpMerchant{
 
     // This function will take Name and CNIC as perameter and check validation
 
-    function Merchant_validation(&$Name,&$Email,&$Merchant_password){//,&$Status,&$Image,&$Create_at,&$Current_at,&$Token,&$Card_id){
-        //$validate = new Validate();
+    function Merchant_validation(&$Name,&$Email,&$Merchant_password){
+        $validate = new Validate();
         $data = json_decode(file_get_contents("php://input"),true);
-        $Name = $data['Name'];
-        $Email = $data['Email'];
-        $Merchant_password = $data['Merchant_password'];
-        // $Status = $data['Status'];
-        // $Image = $data['Image'];
-        // $Create_at = $data['Create_at'];
-        // $Current_at = $data['Current_at'];
-        // $Token = $data['Token'];
-        // $Card_id = $data['Card_id'];
+        
+        //$Image = $data['Image'];
+        if ($validate->name_validate($data['Name']) == true){
+            $Name = $data['Name'];
+        }
+        else{
+            die("Name is not valid");
+        }
 
+        if ($validate->email_validate($data['Email']) == true){
+            $Email = $data['Email'];
+        }
+        else{
+            die("Email is not valid");
+        }
 
+        if ($validate->password_validate($data['Merchant_password']) == true){
+            $Merchant_password = $data['Merchant_password'];
+        }
+        else{
+            die("Password is not valid");
+        }
 
-
-        // if ($validate->name_validate($data['Name']) == true){
-        //     $Name = $data['Name'];
-        // }
-        // else{
-        //     die("Name is not valid");
-        // }
-        // if ($validate->cnic_validate($data['CNIC']) == true){
-        //     $CNIC = $data['CNIC'];
-        // }
-        // else{
-        //     die("CNIC is not valid");
-        // }
     }
 
-    function Card_validation(&$Card_number,&$Cvc_number,&$Valid_from,&$Valid_till){
-        //$validate = new Validate();
+    function Card_validation(&$Card_number,&$Cvc_number){
+        $validate = new Validate();
         $data = json_decode(file_get_contents("php://input"),true);
-        $Card_number = $data['Card_number'];
+        
         //$Credit = $data['Credit'];
-        $Cvc_number = $data['Cvc_number'];
-        $Valid_from = $data['Valid_from'];
-        $Valid_till = $data['Valid_till'];
+        
+        if ($validate->Card_number_validation($data['Card_number']) == true){
+            $Card_number = $data['Card_number'];
+        }
+        else{
+            die("Card Number is not valid");
+        }
+
+        if ($validate->Cvc_number_validation($data['Cvc_number']) == true){
+            $Cvc_number = $data['Cvc_number'];
+        }
+        else{
+            die("Cvc Number is not valid");
+        }
+
     }
 
     // This fucntion will take php object , conver to json format and return json
@@ -64,9 +74,13 @@ class SignUpMerchant{
         $db = new Database();
         return $db->get_id("card","Card_number","'$value'");
     }
-    function Card_Api($tableName,$Card_number,$Cvc_number,$Valid_from,$Valid_till){
+
+
+    function Card_Api($tableName,$Card_number,$Cvc_number){
         self::headers_function();
-        self::Card_validation($Card_number,$Cvc_number,$Valid_from,$Valid_till);
+        self::Card_validation($Card_number,$Cvc_number);
+        $Valid_from = date("Y-m-d");
+        $Valid_till = date('Y-m-d', strtotime( $Valid_from . " +15 days"));
         $db = new Database();
         $pera = array($Card_number,$Cvc_number,$Valid_from,$Valid_till);
         $db->insert($tableName,$pera);
@@ -74,18 +88,20 @@ class SignUpMerchant{
     }
 
  
-    function Merchant_Api($tableName,$Name,$Email,$Merchant_password,$Image = "Image.jpeg",$Create_at = "10:12:13",$Current_at = "11:12:13"){
+    function Merchant_Api($tableName,$Name,$Email,$Merchant_password,$Image = "Image.jpeg"){
         self::headers_function();
         self::Merchant_validation($Name,$Email,$Merchant_password);
         $Card_id = $this->Card_id;
+        $Create_at = date("H:i:s");
+        $Current_at = date("H:i:s");
         $db = new Database();
         $pera = array($Name,$Email,$Merchant_password,$Image,$Create_at,$Current_at,$Card_id);
         $db->insert($tableName,$pera);
 
     }
     // This fucntion will take table Name , Name, CNIC and fetch data and print in json format
-    function Sign_Api($Name,$Email,$Merchant_password,$Card_number,$Cvc_number,$Valid_from,$Valid_till){
-        self::Card_Api("card",$Card_number,$Cvc_number,$Valid_from,$Valid_till);
+    function Sign_Api($Name,$Email,$Merchant_password,$Card_number,$Cvc_number){
+        self::Card_Api("card",$Card_number,$Cvc_number);
         self::Merchant_Api("merchant",$Name,$Email,$Merchant_password);
     }
 }
@@ -94,10 +110,8 @@ class SignUpMerchant{
     $Merchant_password = null;
     $Card_number = null;
     $Cvc_number = null;
-    $Valid_from = null;
-    $Valid_till = null;
     $Credit = null;
     $Api = new SignUpMerchant();
-    $Api->Sign_Api($Name,$Email,$Merchant_password,$Card_number,$Cvc_number,$Valid_from,$Valid_till);
+    $Api->Sign_Api($Name,$Email,$Merchant_password,$Card_number,$Cvc_number);
 
 ?>
